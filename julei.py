@@ -20,28 +20,50 @@ def update_centroids(data,clusters,k):
         centroids[i]=data[clusters==i].mean(axis=0)
     return centroids
 
-def kmeans(data,k,max_iter=100,tol=1e-4):
-    centroids=initialize_centroids(data,k)
-    clusters=np.zeros(len(data))
+
+import numpy as np
+
+
+def kmeans(data, k, max_iter=100, tol=1e-4):
+    centroids = initialize_centroids(data, k)
+    clusters = np.zeros(len(data))
+
     for i in range(max_iter):
-        clusters=assign_clusters(data,centroids)
-        new_centroids=update_centroids(data,clusters,k)
+        clusters = assign_clusters(data, centroids)
+        new_centroids = update_centroids(data, clusters, k)
 
-        if np.all(np.abs(new_centroids-centroids)<tol):
-            print('达到最小容差值，停止迭代')
+        if np.all(np.abs(new_centroids - centroids) < tol):
             centroids = new_centroids
-            return clusters,centroids
-        centroids=new_centroids
-    print('达到最大迭代次数，停止迭代')
-    return clusters,centroids
+            break
+        centroids = new_centroids
 
+    # 计算SSE
+    sse = 0
+    for j in range(k):
+        points = data[clusters == j]
+        sse += np.sum((points - centroids[j]) ** 2)
+
+    return clusters, centroids, sse
+
+
+def find_optimal_k(data,max_iter=100,tol=1e-4):
+    sse=np.zeros(10)
+    for i in range(10):
+        clusters,centroids,sse[i]=kmeans(data,(i+1),max_iter,tol)
+    diff=np.diff(sse)
+    second_deri=np.diff(sse)
+    optimal_k=np.argmax(diff)
+    return optimal_k
 # 示例数据
 data = np.random.rand(200, 2)
-k = 4  # 类别数量
+# 类别数量
 
+sse=0
+optimal_k= find_optimal_k(data)
 clusters=np.zeros(len(data))
-centroids=np.zeros(k)
-clusters, centroids = kmeans(data, k)
+centroids=np.zeros(optimal_k)
+clusters,centroids,sse=kmeans(data,optimal_k)
+
 
 # 可视化结果
 plt.scatter(data[:, 0], data[:, 1],c=clusters, cmap='viridis')
