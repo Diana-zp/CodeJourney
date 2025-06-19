@@ -1,0 +1,16 @@
+Fs=1000;
+T=1/Fs;
+L=1500;
+t=(0:L-1).*T;
+y=sin(2*pi.*20.*t)+1.4.*sin(2*pi.*40.*t);
+%对左声道进行单边傅里叶变换
+Y=fft(y);
+%L=length(Y);
+P2=abs(Y/L);
+P1=P2(1:L/2+1);%一半加一
+P1(2:end-1)=2.*P1(2:end-1);
+%频率生成
+f=Fs/L.*(0:L/2);
+figure
+plot(f,abs(P1));
+title("频谱图")

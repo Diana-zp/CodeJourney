@@ -1,0 +1,82 @@
+% 读取音频文件
+filename = '录音 .m4a';
+[y, Fs] = audioread(filename);  % Fs为采样率
+% 生成时间轴（单位：秒）
+t = (0:length(y)-1)/Fs;
+% 绘制波形
+figure;
+subplot(2,1,1);
+plot(t, y(:,1));
+title('左声道');
+xlabel('时间 (s)');
+ylabel('幅值');
+grid on;
+subplot(2,1,2);
+plot(t, y(:,2));
+title('右声道');
+xlabel('时间 (s)');
+ylabel('幅值');
+grid on;
+
+
+Y=fft(y);
+L=length(Y);
+P2=abs(Y/L);
+if mod(L,2)==0
+    P1=P2(1:L/2+1);%一半加一
+    P1(2:end-1)=2.*P1(2:end-1);
+else
+    P1=P2(1:(L+1)/2);
+    P1(2:end)=2.*P1(2:end);
+end
+
+
+
+%设计数字滤波器
+lpfilt=designfilt('lowpassfir','PassbandFrequency',4000,'StopbandFrequency',4300,'PassbandRipple',1,'StopbandAttenuation',60,'SampleRate',48000);
+y_filtered(:,1)= filter(lpfilt,y(:,1));
+y_filtered(:,2)= filter(lpfilt,y(:,2));
+
+figure;
+subplot(2,1,1);
+plot(t, y_filtered(:,1));
+title('左声道');
+xlabel('时间 (s)');
+ylabel('幅值');
+grid on;
+subplot(2,1,2);
+plot(t, y_filtered(:,2));
+title('右声道');
+grid on;
+
+
+Y=fft(y_filtered);
+L=length(Y);
+P2=abs(Y/L);
+if mod(L,2)==0
+    P3=P2(1:L/2+1);%一半加一
+    P3(2:end-1)=2.*P3(2:end-1);
+else
+    P3=P2(1:(L+1)/2);
+    P3(2:end)=2.*P3(2:end);
+end
+
+%频率生成
+f=Fs/L.*(0:L/2);
+figure
+subplot(2,1,1);
+plot(f,abs(P1));
+xlabel('频率(HZ)');
+ylabel('幅度');
+title('滤波前频谱');
+subplot(2,1,2);
+plot(f,abs(P3));
+title("频谱图")
+xlabel('频率(HZ)');
+ylabel('幅度');
+title('滤波后频谱');
+
+filename = '滤波后音频.m4a';
+audiowrite(filename, y_filtered, Fs);
+
+
